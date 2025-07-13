@@ -1,3 +1,7 @@
+const express = require("express");
+const router = express.Router();
+const DecisionHistory = require("../models/DecisionHistory");
+
 router.post("/analyze-decision", async (req, res) => {
   if (!req.user) return res.status(401).json({ message: "Unauthorized" });
 
@@ -39,21 +43,25 @@ router.post("/analyze-decision", async (req, res) => {
     }
   };
 
-router.get("/decision-history", async (req, res) => {
-  // Step 1: Check if the user is authenticated
-  if (!req.user) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
-  // Step 2: Fetch decisions belonging to this specific user
-  const data = await DecisionHistory.find({ user: req.user.email })
-    .sort({ timestamp: -1 })
-    .limit(5);
-
-  // Step 3: Send the data
-  res.json(data);
-});
+  const history = new DecisionHistory({
+    user: req.user.email,
+    product: product,
+    result: [scenario1, scenario2],
+    timestamp: new Date()
+  });
 
   await history.save();
   res.json({ scenario1, scenario2 });
 });
+
+router.get("/decision-history", async (req, res) => {
+  if (!req.user) return res.status(401).json({ message: "Unauthorized" });
+
+  const data = await DecisionHistory.find({ user: req.user.email })
+    .sort({ timestamp: -1 })
+    .limit(5);
+
+  res.json(data);
+});
+
+module.exports = router;
