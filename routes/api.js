@@ -2,6 +2,18 @@ const express = require("express");
 const router = express.Router();
 const DecisionHistory = require("../models/DecisionHistory");
 
+// ✅ Add this route to send product list to frontend
+router.get("/products", (req, res) => {
+  res.json([
+    { name: "Ergonomic Chair", price: 299, category: "Furniture" },
+    { name: "Planner", price: 20, category: "Stationery" },
+    { name: "Knife Set", price: 89, category: "Kitchen" },
+    { name: "Smart Bulbs", price: 45, category: "Electronics" },
+    { name: "Fruit Basket", price: 35, category: "Food" }
+  ]);
+});
+
+// 💡 Existing logic — leave this unchanged
 router.post("/analyze-decision", async (req, res) => {
   if (!req.user) return res.status(401).json({ message: "Unauthorized" });
 
