@@ -1,50 +1,51 @@
-// server.js
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const dotenv = require('dotenv');
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const dotenv = require("dotenv");
+const session = require("express-session");
+const passport = require("passport");
 
-// Load environment variables
 dotenv.config();
 
-// Initialize app
 const app = express();
 
-// Middleware
-app.use(cors());
+// Enable CORS to allow frontend access (with cookies!)
+app.use(cors({
+  origin: "http://localhost:3000",  // ✅ your React frontend
+  credentials: true                 // ✅ allow cookies/session sharing
+}));
+
+// Parse JSON request bodies
 app.use(express.json());
 
-// Example test route
-app.get('/', (req, res) => {
-  res.send('QuantumShop Backend is live! 🚀');
-});
+// Session setup for storing login state
+app.use(session({
+  secret: process.env.JWT_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: false,        // ⚠️ Set to true only if using HTTPS in production
+    httpOnly: true,
+    sameSite: "lax"       // or "none" if frontend is on a different domain
+  }
+}));
 
-console.log("🔍 MONGO_URI =", process.env.MONGO_URI); // add this before mongoose.connect
+// Initialize Passport for Google login
+app.use(passport.initialize());
+app.use(passport.session());
 
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => console.log("✅ MongoDB connected"))
-.catch(err => console.error("❌ MongoDB connection error:", err));
+// MongoDB connection
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("✅ MongoDB connected");
+    app.listen(process.env.PORT || 5000, () =>
+      console.log(`🚀 Server running on http://localhost:${process.env.PORT || 5000}`)
+    );
+  })
+  .catch(err => {
+    console.error("❌ MongoDB connection error:", err);
+  });
 
-require('dotenv').config();
-
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}).then(() => console.log("MongoDB Connected"))
-  .catch(err => console.log("MongoDB Error:", err));
-
-// Server listen
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
-const fakeWalmart = require('./routes/fakeWalmart');
-app.use('/api/fake-walmart', fakeWalmart);
-const decisionEngine = require('./routes/decisionEngine');
-app.use('/api/decision', decisionEngine);
-const decisionRoutes = require('./routes/decisionEngine');
-app.use('/api/decision', decisionRoutes);
+// Routes
+app.use("/auth", require("./routes/auth"));  // Google login routes
+app.use("/api", require("./routes/api"));    // Product + Decision routes
